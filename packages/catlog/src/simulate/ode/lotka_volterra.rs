@@ -1,5 +1,7 @@
 //! Lotka-Volterra differential equations.
 
+#[cfg(test)]
+use crate::simulate::ode::NumericalPolynomialSystem;
 use crate::simulate::ode::PolynomialSystem;
 use crate::zero::alg::Polynomial;
 use nalgebra::{DMatrix, DVector};
@@ -63,13 +65,13 @@ impl ODESystem for LotkaVolterraSystem {
 }
 
 #[cfg(test)]
-pub(crate) fn create_predator_prey() -> ODEProblem<LotkaVolterraSystem> {
+pub(crate) fn create_predator_prey() -> ODEProblem<NumericalPolynomialSystem<u8>> {
     let A = DMatrix::from_row_slice(2, 2, &[0.0, -1.0, 1.0, 0.0]);
     let b = DVector::from_column_slice(&[2.0, -1.0]);
-    let sys = LotkaVolterraSystem::new(A, b);
+    let lv_sys = LotkaVolterraSystem::new(A, b);
 
     let x0 = DVector::from_column_slice(&[1.0, 1.0]);
-    ODEProblem::new(sys, x0).end_time(10.0)
+    ODEProblem::new(lv_sys.as_polynomial().to_numerical(), x0.clone()).end_time(10.0)
 }
 
 #[cfg(test)]
@@ -81,6 +83,7 @@ mod tests {
 
     #[test]
     fn predator_prey() {
+        panic!();
         let problem = create_predator_prey();
         let result = problem.solve_rk4(0.1).unwrap();
         let expected = expect![["
