@@ -1,5 +1,7 @@
 //! Lotka-Volterra differential equations.
 
+use crate::simulate::ode::PolynomialSystem;
+use crate::zero::alg::Polynomial;
 use nalgebra::{DMatrix, DVector};
 
 #[cfg(test)]
@@ -24,6 +26,31 @@ impl LotkaVolterraSystem {
             interaction_coeffs: A,
             growth_rates: b,
         }
+    }
+
+    /// Converts to a polynomial system, with indices (usize) for variable names.
+    pub fn as_polynomial(self) -> PolynomialSystem<usize, f32, u8> {
+        let n = self.growth_rates.len();
+        let var = |c: usize| Polynomial::<usize, f32, u8>::generator(c);
+        let vars = (0..n).map(|i| var(i));
+        self.growth_rates
+            .iter()
+            .enumerate()
+            .map(|(i, rate)| {
+                (
+                    i,
+                    var(i)
+                        * (self
+                            .interaction_coeffs
+                            .columns(0, n)
+                            .into_iter()
+                            .zip(vars.clone())
+                            .map(|(c, p)| p * *c)
+                            .sum::<Polynomial<usize, f32, u8>>()
+                            + *rate),
+                )
+            })
+            .collect()
     }
 }
 
